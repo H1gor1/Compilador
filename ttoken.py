@@ -55,6 +55,8 @@ class TOKEN(IntEnum):
     RET = 51
     mod = 52
     TBOOLEAN = 53
+    TRUE = 54
+    FALSE = 55
 
 
     @classmethod
@@ -111,7 +113,9 @@ class TOKEN(IntEnum):
             50: '->',
             51: 'return',
             52: '%',
-            53: 'boolean'
+            53: 'boolean',
+            54: 'true',
+            55: 'false'
 
         }
         return nomes[token]
@@ -143,6 +147,8 @@ class TOKEN(IntEnum):
             '->': TOKEN.returnCharacter,
             'return': TOKEN.RET,
             'boolean': TOKEN.TBOOLEAN,
+            'true': TOKEN.TRUE,
+            'false': TOKEN.FALSE,
         }
         if lexema in reservadas:
             return reservadas[lexema]

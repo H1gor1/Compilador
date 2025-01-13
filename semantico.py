@@ -8,6 +8,8 @@ class Semantico:
     def __init__(self, nomeAlvo):
         self.tabelaSimbolos = [dict()]
 
+        self.returnoFuncaoAtual = None
+
         # Tabela de operações usando apenas tokens para o operador
         self.tabelaOperacoes = {
             frozenset({(TOKEN.TINT, False), TOKEN.mais, (TOKEN.TINT, False)}): (TOKEN.TINT, False),
@@ -66,13 +68,15 @@ class Semantico:
                 return escopo[nome]
         return None
 
-    def iniciaFuncao(self):
+    def iniciaFuncao(self, tipo):
         self.tabelaSimbolos = [dict()] + self.tabelaSimbolos
+        self.returnoFuncaoAtual = tipo
 
     def terminaFuncao(self):
         self.tabelaSimbolos = self.tabelaSimbolos[1:]
+        self.returnoFuncaoAtual = None
 
-    def verificaOperacao(self, e1, op=None, e2=None):
+    def verificaOperacao(self, e1, op, e2=None):
         if e2 is None:
             # Operação unária
             entrada = frozenset({op, e1})
@@ -85,4 +89,5 @@ class Semantico:
         else:
             msg = f"Operação inválida: {e1} {op} {e2}" if e2 else f"Operação inválida: {op} {e1}"
             raise SemanticoErro(msg)
+    
 
