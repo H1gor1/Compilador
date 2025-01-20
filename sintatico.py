@@ -33,7 +33,7 @@ class Sintatico:
     def consomeOpRel(self, *tokenAtual):
         (token, lexema, linha, coluna) = self.tokenLido
         if token in tokenAtual:
-            op = self.tokenLido
+            op = self.tokenLido[0]
             self.tokenLido = self.lexico.getToken()
             return op
         else:
@@ -71,7 +71,7 @@ class Sintatico:
         argumentos = self.params()
         self.consome(TOKEN.fechaPar)
         resultado = self.tipoResultado()
-        tipos = argumentos + resultado
+        tipos = argumentos + [resultado]
         self.semantico.declara(salvaIdent, (TOKEN.FUNCTION, tipos))
         self.semantico.iniciaFuncao(resultado)
         for p in argumentos:
@@ -119,8 +119,7 @@ class Sintatico:
             tipo = self.tipo()
         else:
             tipo = None
-        tokenDesconhecido = (0,0,0,0)
-        return [(tokenDesconhecido,tipo)]
+        return tipo
 
     def tipo(self):
         # <tipo> -> string <opcLista> | int <opcLista> | float <opcLista> 
@@ -278,15 +277,48 @@ class Sintatico:
             self.opcRange()
             self.consome(TOKEN.fechaPar)
     
+    def opcRange(self):
+        # <opcRange> -> , <exp> | LAMBDA
+        if self.tokenLido[0] == TOKEN.virg:
+            self.consome(TOKEN.virg)
+            self.exp()
+    
     def lista(self):
         # <lista> -> ident <opcIndice> | [ <elemLista> ]
         if self.tokenLido[0] == TOKEN.ident:
+            e1 = self.tokenLido
             self.consome(TOKEN.ident)
-            self.opcIndice()
+            return self.opcIndice(token=e1)
         else:
             self.consome(TOKEN.abreCol)
             self.elemLista()
             self.consome(TOKEN.fechaCol)
+    
+    def opcIndice(self, token):
+        e1 = token
+        result = self.semantico.consulta(e1)
+        # <opcIndice> -> LAMBDA | [ <exp> <restoElem> ]
+        if self.tokenLido[0] == TOKEN.abreCol:
+            self.consome(TOKEN.abreCol)
+            e2 = self.exp()
+
+            if self.tokenLido[0] == TOKEN.doisPts:
+                self.consome(TOKEN.doisPts)
+                e3 = self.exp()
+                if e2 == (TOKEN.TINT, False) and e3 == (TOKEN.TINT, False):
+                    result = (TOKEN.TINT, True)
+                else:
+                    self.semantico.erroSemantico(e1, "Indices devem ser inteiros.")
+            else:
+                if e2 == (TOKEN.TINT, False):
+                    result = (TOKEN.TINT, False)
+                else:
+                    self.semantico.erroSemantico(e1, "Indice deve ser inteiro.")
+
+            self.consome(TOKEN.fechaCol)
+            return result
+        else:
+            return result
     
     def elemLista(self):
         # <elemLista> -> LAMBDA | <elem> <restoElemLista>
@@ -314,19 +346,13 @@ class Sintatico:
         elif self.tokenLido[0] == TOKEN.ident:
             self.consome(TOKEN.ident)
     
-    def opcRange(self):
-        # <opcRange> -> , <exp> | LAMBDA
-        if self.tokenLido[0] == TOKEN.virg:
-            self.consome(TOKEN.virg)
-            self.exp()
-    
     def atrib(self):
         # <atrib> -> ident <opcIndice> = <exp> ;
         if self.tokenLido[0] == TOKEN.ident:
             salvaIdent = self.tokenLido
             self.consome(TOKEN.ident)
             
-            is_lista = self.opcIndice()
+            is_lista = self.opcIndice(salvaIdent)
 
             self.consome(TOKEN.atrib)
             tipo_expressao = self.exp()
@@ -412,7 +438,7 @@ class Sintatico:
             res = self.semantico.verificaOperacao(e1, TOKEN.OR, e2)
             return self.restoDisj(res)
         else:
-            pass
+            return e1
     
     def conj(self):
         # <conj> -> <nao> <restoConj>
@@ -427,7 +453,7 @@ class Sintatico:
             res = self.semantico.verificaOperacao(e1, TOKEN.AND, e2)
             return self.restoConj(res)
         else:
-            pass
+            return e1
     
     def nao(self):
         # <nao> -> not <nao> | <rel>
@@ -450,12 +476,12 @@ class Sintatico:
             e2 = self.soma()
             return self.semantico.verificaOperacao(e1, op, e2)
         else:
-            pass
+            return e1
     
     def soma(self):
         # <soma> -> <mult> <restoSoma>
         e1 = self.mult()
-        self.restoSoma(e1)
+        return self.restoSoma(e1)
     
     def restoSoma(self, e1):
         # <restoSoma> -> LAMBDA | + <mult> <restoSoma> | - <mult> <restoSoma>
@@ -470,12 +496,12 @@ class Sintatico:
             res = self.semantico.verificaOperacao(e1, TOKEN.menos, e2)
             return self.restoSoma(res)
         else:
-            pass
+            return e1
     
     def mult(self):
         # <mult> -> <uno> <restoMult>
         e1 = self.uno()
-        self.restoMult(e1)
+        return self.restoMult(e1)
     
     def restoMult(self, e1):
         # <restoMult> -> LAMBDA | / <uno> <restoMult> | * <uno> <restoMult> | % <uno> <restoMult> 
@@ -531,9 +557,10 @@ class Sintatico:
                 else:
                     (tipo, info) = result
                     if (tipo == TOKEN.FUNCTION):
-                        self.call()
+                        return self.call()
                     else:
-                        self.lista()
+                        res = self.lista()
+                        return res
                     
         elif self.tokenLido[0] == TOKEN.abrePar:
             self.consome(TOKEN.abrePar)
@@ -548,10 +575,13 @@ class Sintatico:
         #     self.consome(TOKEN.ident)
         #     return
 
+        salvaIdent = self.tokenLido
         self.consome(TOKEN.ident)
+        result = self.semantico.consulta(salvaIdent)
         self.consome(TOKEN.abrePar)
         self.listaOutsOpc()
         self.consome(TOKEN.fechaPar)
+        return result[1][-1]
 
     def listaOutsOpc(self):
         # <lista_outs_opc> -> <lista_outs> | LAMBDA
@@ -560,23 +590,6 @@ class Sintatico:
         else:
             pass
     
-    def opcIndice(self):
-        # <opcIndice> -> LAMBDA | [ <exp> <restoElem> ]
-        if self.tokenLido[0] == TOKEN.abreCol:
-            self.consome(TOKEN.abreCol)
-            self.exp()
-            self.restoElem()
-            self.consome(TOKEN.fechaCol)
-        else:
-            pass
-
-    def restoElem(self):
-        # <restoElem> -> LAMBDA | : <exp>
-        if self.tokenLido[0] == TOKEN.doisPts:
-            self.consome(TOKEN.doisPts)
-            self.exp()
-        else:
-            pass
         
 if __name__ == '__main__':
     print("Para testar, chame o Tradutor")

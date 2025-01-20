@@ -12,14 +12,66 @@ class Semantico:
 
         # Tabela de operações usando apenas tokens para o operador
         self.tabelaOperacoes = {
+            # operações aritméticas
             frozenset({(TOKEN.TINT, False), TOKEN.mais, (TOKEN.TINT, False)}): (TOKEN.TINT, False),
-            frozenset({(TOKEN.TFLOAT, False), TOKEN.mais, (TOKEN.TFLOAT, False)}): (TOKEN.TFLOAT, False),
+            frozenset({(TOKEN.TINT, False), TOKEN.menos, (TOKEN.TINT, False)}): (TOKEN.TINT, False),
             frozenset({(TOKEN.TINT, False), TOKEN.multiplica, (TOKEN.TINT, False)}): (TOKEN.TINT, False),
-            frozenset({(TOKEN.TFLOAT, False), TOKEN.multiplica, (TOKEN.TFLOAT, False)}): (TOKEN.TFLOAT, False),
+            frozenset({(TOKEN.TINT, False), TOKEN.divide, (TOKEN.TINT, False)}): (TOKEN.TFLOAT, False),
+            frozenset({(TOKEN.TINT, False), TOKEN.mod, (TOKEN.TINT, False)}): (TOKEN.TINT, False),
+            frozenset({(TOKEN.TFLOAT, False), TOKEN.mais, (TOKEN.TFLOAT, False)}): (TOKEN.TFLOAT, False),
+            frozenset({(TOKEN.TFLOAT, False), TOKEN.mais, (TOKEN.TINT, False)}): (TOKEN.TFLOAT, False),
+            frozenset({(TOKEN.TFLOAT, False), TOKEN.multiplica, (TOKEN.TINT, False)}): (TOKEN.TFLOAT, False),
+            frozenset({(TOKEN.TFLOAT, False), TOKEN.divide, (TOKEN.TINT, False)}): (TOKEN.TFLOAT, False),
 
-            # Operações unárias
+            # operações de concatenação
+            frozenset({(TOKEN.TSTRING, False), TOKEN.mais, (TOKEN.TSTRING, False)}): (TOKEN.TSTRING, False),
+            frozenset({(TOKEN.TSTRING, True), TOKEN.mais, (TOKEN.TSTRING, True)}): (TOKEN.TSTRING, True),
+            frozenset({(TOKEN.TINT, True), TOKEN.mais, (TOKEN.TINT, True)}): (TOKEN.TINT, True),
+            frozenset({(TOKEN.TFLOAT, True), TOKEN.mais, (TOKEN.TFLOAT, True)}): (TOKEN.TFLOAT, True),
+            frozenset({(TOKEN.TBOOLEAN, True), TOKEN.mais, (TOKEN.TBOOLEAN, True)}): (TOKEN.TBOOLEAN, True),
+            frozenset({(None, True), TOKEN.mais, (None, True)}): (None, True),
+            frozenset({(None, True), TOKEN.mais, (TOKEN.TSTRING, True)}): (None, True),
+            frozenset({(None, True), TOKEN.mais, (TOKEN.TINT, True)}): (None, True),
+            frozenset({(None, True), TOKEN.mais, (TOKEN.TFLOAT, True)}): (None, True),
+            frozenset({(None, True), TOKEN.mais, (TOKEN.TBOOLEAN, True)}): (None, True),
+
+            # operações relacionais
+            frozenset({(TOKEN.TINT, False), TOKEN.igual, (TOKEN.TINT, False)}): (TOKEN.TBOOLEAN, False),
+            frozenset({(TOKEN.TINT, False), TOKEN.diferente, (TOKEN.TINT, False)}): (TOKEN.TBOOLEAN, False),
+            frozenset({(TOKEN.TINT, False), TOKEN.menor, (TOKEN.TINT, False)}): (TOKEN.TBOOLEAN, False),
+            frozenset({(TOKEN.TINT, False), TOKEN.menorIgual, (TOKEN.TINT, False)}): (TOKEN.TBOOLEAN, False),
+            frozenset({(TOKEN.TINT, False), TOKEN.maior, (TOKEN.TINT, False)}): (TOKEN.TBOOLEAN, False),
+            frozenset({(TOKEN.TINT, False), TOKEN.maiorIgual, (TOKEN.TINT, False)}): (TOKEN.TBOOLEAN, False),
+            frozenset({(TOKEN.TFLOAT, False), TOKEN.igual, (TOKEN.TFLOAT, False)}): (TOKEN.TBOOLEAN, False),
+            frozenset({(TOKEN.TFLOAT, False), TOKEN.diferente, (TOKEN.TFLOAT, False)}): (TOKEN.TBOOLEAN, False),
+            frozenset({(TOKEN.TFLOAT, False), TOKEN.menor, (TOKEN.TFLOAT, False)}): (TOKEN.TBOOLEAN, False),
+            frozenset({(TOKEN.TFLOAT, False), TOKEN.menorIgual, (TOKEN.TFLOAT, False)}): (TOKEN.TBOOLEAN, False),
+            frozenset({(TOKEN.TFLOAT, False), TOKEN.maior, (TOKEN.TFLOAT, False)}): (TOKEN.TBOOLEAN, False),
+            frozenset({(TOKEN.TFLOAT, False), TOKEN.maiorIgual, (TOKEN.TFLOAT, False)}): (TOKEN.TBOOLEAN, False),
+            frozenset({(TOKEN.TSTRING, False), TOKEN.igual, (TOKEN.TSTRING, False)}): (TOKEN.TBOOLEAN, False),
+            frozenset({(TOKEN.TSTRING, False), TOKEN.diferente, (TOKEN.TSTRING, False)}): (TOKEN.TBOOLEAN, False),
+            frozenset({(TOKEN.TINT, False), TOKEN.igual, (TOKEN.TFLOAT, False)}): (TOKEN.TBOOLEAN, False),
+            frozenset({(TOKEN.TINT, False), TOKEN.diferente, (TOKEN.TFLOAT, False)}): (TOKEN.TBOOLEAN, False),
+            frozenset({(TOKEN.TINT, False), TOKEN.menor, (TOKEN.TFLOAT, False)}): (TOKEN.TBOOLEAN, False),
+            frozenset({(TOKEN.TINT, False), TOKEN.menorIgual, (TOKEN.TFLOAT, False)}): (TOKEN.TBOOLEAN, False),
+            frozenset({(TOKEN.TINT, False), TOKEN.maior, (TOKEN.TFLOAT, False)}): (TOKEN.TBOOLEAN, False),
+            frozenset({(TOKEN.TBOOLEAN, False), TOKEN.igual, (TOKEN.TBOOLEAN, False)}): (TOKEN.TBOOLEAN, False),
+            frozenset({(TOKEN.TBOOLEAN, False), TOKEN.diferente, (TOKEN.TBOOLEAN, False)}): (TOKEN.TBOOLEAN, False),
+            frozenset({(TOKEN.TBOOLEAN, False), TOKEN.AND, (TOKEN.TBOOLEAN, False)}): (TOKEN.TBOOLEAN, False),
+            frozenset({(TOKEN.TBOOLEAN, False), TOKEN.OR, (TOKEN.TBOOLEAN, False)}): (TOKEN.TBOOLEAN, False),
+
+            # operações unárias
+            frozenset({TOKEN.mais, (TOKEN.TINT, False)}): (TOKEN.TINT, False),
             frozenset({TOKEN.menos, (TOKEN.TINT, False)}): (TOKEN.TINT, False),
+            frozenset({TOKEN.mais, (TOKEN.TFLOAT, False)}): (TOKEN.TFLOAT, False),
+            frozenset({TOKEN.menos, (TOKEN.TFLOAT, False)}): (TOKEN.TFLOAT, False),
             frozenset({TOKEN.NOT, (TOKEN.TBOOLEAN, False)}): (TOKEN.TBOOLEAN, False),
+
+            # valores hardcoded
+            frozenset([(TOKEN.TINT, False)]): (TOKEN.TINT, True),
+            frozenset([(TOKEN.TFLOAT, False)]): (TOKEN.TFLOAT, True),
+            frozenset([(TOKEN.TSTRING, False)]): (TOKEN.TSTRING, True),
+            frozenset([(TOKEN.TINT, False), (TOKEN.TFLOAT, False)]): (TOKEN.TFLOAT, True),
         }
         self.alvo = open(nomeAlvo, "wt")
         self.declara((TOKEN.ident, 'len', 0, 0),
@@ -85,7 +137,8 @@ class Semantico:
             entrada = frozenset({e1, op, e2})
         
         if entrada in self.tabelaOperacoes:
-            return self.tabelaOperacoes[entrada]
+            teste = self.tabelaOperacoes[entrada] 
+            return teste
         else:
             msg = f"Operação inválida: {e1} {op} {e2}" if e2 else f"Operação inválida: {op} {e1}"
             raise SemanticoErro(msg)
