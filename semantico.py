@@ -138,13 +138,13 @@ class Semantico:
     def verificaOperacao(self, e1, op, e2=None):
         if e2 is None:
             # Operação unária
-            entrada = frozenset({op, e1})
+            entrada = frozenset({op, e1[0]})  # Use apenas o primeiro elemento
         else:
             # Operação binária
-            entrada = frozenset({e1, op, e2})
-        
+            entrada = frozenset({e1[0], op, e2[0]})  # Use apenas os primeiros elementos de e1 e e2
+
         if entrada in self.tabelaOperacoes:
-            teste = self.tabelaOperacoes[entrada] 
+            teste = self.tabelaOperacoes[entrada]
             return teste
         else:
             msg = f"Operação inválida: {e1} {op} {e2}" if e2 else f"Operação inválida: {op} {e1}"
