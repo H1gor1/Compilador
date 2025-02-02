@@ -58,9 +58,16 @@ class Sintatico:
 #-------- segue a gramatica -----------------------------------------
     def prog(self):
         # <prog> -> <funcao> <RestoFuncoes>
-
+        self.semantico.gera(0, '# Código gerado pelo compilador\n')
+        self.semantico.gera(0, 'class Programa:\n')
+        self.semantico.gera(1, 'def __init__(self):\n')
+        self.semantico.gera(2, 'pass\n\n')
         self.funcao()
         self.restoFuncoes()
+
+        self.semantico.gera(0, '\nif __name__ == "__main__":\n')
+        self.semantico.gera(1, 'programa = Programa()\n')
+        self.semantico.gera(1, 'programa.main()\n')
 
     def funcao(self):
         # <funcao> -> function ident ( <params> ) <tipoResultado> <corpo>
@@ -74,9 +81,16 @@ class Sintatico:
         tipos = argumentos + [resultado]
         self.semantico.declara(salvaIdent, (TOKEN.FUNCTION, tipos))
         self.semantico.iniciaFuncao(resultado)
+
+        # Gera o código para a função
+        nome_funcao = salvaIdent[1]
+        self.semantico.gera(1, f'def {nome_funcao}(self):\n')
+        self.semantico.iniciaFuncao(resultado)
+
         for p in argumentos:
             (tt, (tipo,info)) = p
             self.semantico.declara(tt, (tipo,info))
+            self.semantico.gera(2, f'{tt[1]} = None  # Parâmetro do tipo {tipo}\n')
         self.corpo()
         self.semantico.terminaFuncao()
 
@@ -251,6 +265,9 @@ class Sintatico:
                     retornoFunction = self.semantico.returnoFuncaoAtual
                     if e1 != retornoFunction:
                         self.semantico.erroSemantico(lexema, "Expression doesn't match with the function return type.")
+        
+        # Gera o código para o return
+        self.semantico.gera(2, 'return\n')
         self.consome(TOKEN.ptoVirg)
     
     def expOpc(self):
@@ -267,6 +284,10 @@ class Sintatico:
         if e1 != (TOKEN.TBOOLEAN, False):
             self.semantico.erroSemantico(self.tokenLido, "A expressão deve ser um boolean")
         self.consome(TOKEN.fechaPar)
+
+        # Gera o código para o while
+        self.semantico.gera(2, 'while True:\n')
+
         self.com()
     
     def repeticao(self):
@@ -280,6 +301,11 @@ class Sintatico:
         self.consome(TOKEN.IN)
         self.range()
         self.consome(TOKEN.DO)
+
+        # Gera o código para o for
+        nome_variavel = salvaIdent[1]
+        self.semantico.gera(2, f'for {nome_variavel} in range():\n')
+
         self.com()
 
     def range(self):
@@ -343,7 +369,7 @@ class Sintatico:
             return result
         else:
             return result
-        
+            
     def elemLista(self):
         # <elemLista> -> LAMBDA | <elem> <restoElemLista>
         if self.tokenLido[0] == TOKEN.intVal or self.tokenLido[0] == TOKEN.floatVal or self.tokenLido[0] == TOKEN.strVal or self.tokenLido[0] == TOKEN.ident:
@@ -381,6 +407,10 @@ class Sintatico:
             self.consome(TOKEN.atrib)
             tipo_expressao = self.exp()
 
+            # Gera o código para a atribuição
+            nome_variavel = salvaIdent[1]
+            self.semantico.gera(2, f'{nome_variavel} = {tipo_expressao}\n')
+
             self.consome(TOKEN.ptoVirg)
     
 
@@ -392,6 +422,9 @@ class Sintatico:
         self.exp()
         self.consome(TOKEN.fechaPar)
         self.consome(TOKEN.THEN)
+        
+        # Gera o código para o if
+        self.semantico.gera(2, 'if True:\n')  # Substitua True pela expressão correta
         self.com()
         self.elseopc()
     
@@ -416,6 +449,12 @@ class Sintatico:
         # Verifica se a variável existe
         if self.semantico.consulta(salva_ident) is None:
             self.semantico.erroSemantico(salva_ident, "Variável não declarada.")
+
+
+        # Gera o código para a leitura
+        nome_variavel = salva_ident[1]
+        self.semantico.gera(2, f'{nome_variavel} = input()\n')
+
         self.consome(TOKEN.fechaPar)
         self.consome(TOKEN.ptoVirg)
     
@@ -424,6 +463,10 @@ class Sintatico:
         self.consome(TOKEN.WRITE)
         self.consome(TOKEN.abrePar)
         self.listaOut()
+
+        # Gera o código para a escrita
+        self.semantico.gera(2, 'print()\n')
+
         self.consome(TOKEN.fechaPar)
         self.consome(TOKEN.ptoVirg)
     
@@ -450,6 +493,9 @@ class Sintatico:
         self.consome(TOKEN.abreChave)
         self.calculo()
         self.consome(TOKEN.fechaChave)
+
+        # Gera o código para o bloco
+        self.semantico.gera(2, '# Bloco de código\n')
 
     def exp(self):
         # <exp> -> <disj>
