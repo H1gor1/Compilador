@@ -63,7 +63,7 @@ class Lexico:
         col = self.coluna
         while (True):
             if estado == 1:
-                if simbolo.isalpha():
+                if simbolo.isalpha() or simbolo == "_":
                     estado = 2
                 elif simbolo.isdigit():
                     estado = 3
@@ -112,11 +112,11 @@ class Lexico:
                     return (TOKEN.erro, lexema, lin, col)
 
             elif estado == 2:
-                if simbolo.isalnum():
+                if simbolo.isalnum() or simbolo == "_":
                     estado = 2
                 else:
                     self.ungetchar(simbolo)
-                    token = TOKEN.reservada(lexema)
+                    token = TOKEN.reservada(lexema.lower())
                     return (token, lexema, lin, col)
 
             elif estado == 3:

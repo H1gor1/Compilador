@@ -38,7 +38,7 @@
 <conj> -> <nao> <restoConj>
 <restoConj> -> LAMBDA | and <nao> <restoConj>
 <nao> -> not <nao> | <rel>
-<rel> -> <soma> <restoRel>
+<rel> -> <soma> <restoRel>| f| f
 <restoRel> -> LAMBDA | oprel <soma>
 <soma> -> <mult> <restoSoma>
 <restoSoma> -> LAMBDA | + <mult> <restoSoma> | - <mult> <restoSoma>

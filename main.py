@@ -31,7 +31,7 @@ if __name__ == '__main__':
     #     #x.sintatico.testaLexico()
     #     x.finaliza()
     
-    x = Tradutor("bolha.txt")
+    x = Tradutor("./tests/test.txt")
     x.inicializa()
     x.traduz()
     #x.sintatico.testaLexico()

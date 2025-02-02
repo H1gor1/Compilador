@@ -7,6 +7,8 @@ class Semantico:
 
     def __init__(self, nomeAlvo):
         self.tabelaSimbolos = [dict()]
+        self.funcaoPrincipal = None
+        self.codigo = []
 
         self.returnoFuncaoAtual = None
 
@@ -72,6 +74,9 @@ class Semantico:
             frozenset([(TOKEN.TFLOAT, False)]): (TOKEN.TFLOAT, True),
             frozenset([(TOKEN.TSTRING, False)]): (TOKEN.TSTRING, True),
             frozenset([(TOKEN.TINT, False), (TOKEN.TFLOAT, False)]): (TOKEN.TFLOAT, True),
+
+            frozenset({(TOKEN.TSTRING, False), TOKEN.mais, (TOKEN.TSTRING, False)}): (TOKEN.TSTRING, False),
+            frozenset({(TOKEN.TSTRING, True), TOKEN.mais, (TOKEN.TSTRING, False)}): (TOKEN.TSTRING, True),
         }
         self.alvo = open(nomeAlvo, "wt")
         self.declara((TOKEN.ident, 'len', 0, 0),
@@ -82,6 +87,8 @@ class Semantico:
                      (TOKEN.FUNCTION, [(TOKEN.TSTRING, False), (TOKEN.TFLOAT, False)]))
         self.declara((TOKEN.ident, 'trunc', 0, 0),
                      (TOKEN.FUNCTION, [(TOKEN.TFLOAT, False), (TOKEN.TINT, False)]))
+        self.declara((TOKEN.ident, 'make_int_list', 0, 0),
+                 (TOKEN.FUNCTION, [(TOKEN.TINT, False), (TOKEN.TINT, False), (TOKEN.TINT, True)]))
 
     def finaliza(self):
         self.alvo.close()

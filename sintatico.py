@@ -61,7 +61,7 @@ class Sintatico:
 
         self.funcao()
         self.restoFuncoes()
-    
+
     def funcao(self):
         # <funcao> -> function ident ( <params> ) <tipoResultado> <corpo>
         self.consome(TOKEN.FUNCTION)
@@ -109,6 +109,7 @@ class Sintatico:
             tipoParam = (salvaIdent, tipo)
             resto = self.restoParams()
             tiposArgs = [tipoParam] + resto
+            return tiposArgs
         else:
             return []
 
@@ -135,6 +136,10 @@ class Sintatico:
             self.consome(TOKEN.TFLOAT)
             is_lista = self.opcLista()
             return (TOKEN.TFLOAT, is_lista)
+        elif self.tokenLido[0] == TOKEN.TBOOLEAN:
+            self.consome(TOKEN.TBOOLEAN)
+            is_lista = self.opcLista()
+            return (TOKEN.TBOOLEAN, is_lista)
         else:
             # Erro: tipo não esperado
             linha, coluna = self.tokenLido[2], self.tokenLido[3]
@@ -158,16 +163,16 @@ class Sintatico:
 
     def declaracoes(self):
         # <declaracoes> -> <declara> <declaracoes> | LAMBDA
-        if self.tokenLido[0] == TOKEN.TSTRING or self.tokenLido[0] == TOKEN.TINT or self.tokenLido[0] == TOKEN.TFLOAT:
+        if self.tokenLido[0] == TOKEN.TSTRING or self.tokenLido[0] == TOKEN.TINT or self.tokenLido[0] == TOKEN.TFLOAT or self.tokenLido[0] == TOKEN.TBOOLEAN:
             self.declara()
             self.declaracoes()
-    
+
     def declara(self):
         # <declara> -> <tipo> <idents> ;
         tipo = self.tipo()
         idents = self.idents()
         self.consome(TOKEN.ptoVirg)
-        
+
         for ident in idents:
             self.semantico.declara(ident, tipo)
     
@@ -221,16 +226,31 @@ class Sintatico:
             self.condicional()
         elif self.tokenLido[0] == TOKEN.RET:
             self.retorna()
-    
+
     def retorna(self):
         # <retorna> -> return <expOpc> ;
         lexema = self.tokenLido
         self.consome(TOKEN.RET)
-        e1 = self.expOpc()
-        if e1:
-            retornoFunction = self.semantico.returnoFuncaoAtual
-            if e1 != retornoFunction:
-                self.semantico.erroSemantico(lexema, "Expression dont match with the function return")
+        
+        while self.tokenLido[0] != TOKEN.ptoVirg:
+            if self.tokenLido[0] == TOKEN.abreCol:
+                self.consome(TOKEN.abreCol)
+                e1 = self.expOpc()
+
+                if e1:
+                    e1 = (e1[0], True)
+
+                    retornoFunction = self.semantico.returnoFuncaoAtual
+                    if e1 != retornoFunction:
+                        self.semantico.erroSemantico(lexema, "Expression doesn't match with the function return type.")
+
+                self.consome(TOKEN.fechaCol)
+            else:
+                e1 = self.expOpc()
+                if e1:
+                    retornoFunction = self.semantico.returnoFuncaoAtual
+                    if e1 != retornoFunction:
+                        self.semantico.erroSemantico(lexema, "Expression doesn't match with the function return type.")
         self.consome(TOKEN.ptoVirg)
     
     def expOpc(self):
@@ -252,7 +272,11 @@ class Sintatico:
     def repeticao(self):
         # <for> -> for ident in <range> do <com>
         self.consome(TOKEN.FOR)
+        salvaIdent = self.tokenLido
         self.consome(TOKEN.ident)
+        res = self.semantico.consulta(salvaIdent)
+        if res is None:
+            self.semantico.declara(salvaIdent, (TOKEN.TINT, False))
         self.consome(TOKEN.IN)
         self.range()
         self.consome(TOKEN.DO)
@@ -282,7 +306,7 @@ class Sintatico:
         if self.tokenLido[0] == TOKEN.virg:
             self.consome(TOKEN.virg)
             self.exp()
-    
+
     def lista(self):
         # <lista> -> ident <opcIndice> | [ <elemLista> ]
         if self.tokenLido[0] == TOKEN.ident:
@@ -311,19 +335,19 @@ class Sintatico:
                     self.semantico.erroSemantico(e1, "Indices devem ser inteiros.")
             else:
                 if e2 == (TOKEN.TINT, False):
-                    result = (TOKEN.TINT, False)
-                else:
-                    self.semantico.erroSemantico(e1, "Indice deve ser inteiro.")
+                    # Atualiza o resultado com o tipo base da lista
+                    if result and result[1]:  # Se for uma lista
+                        result = (result[0], False)  # Retorna o tipo do elemento
 
             self.consome(TOKEN.fechaCol)
             return result
         else:
             return result
-    
+        
     def elemLista(self):
         # <elemLista> -> LAMBDA | <elem> <restoElemLista>
         if self.tokenLido[0] == TOKEN.intVal or self.tokenLido[0] == TOKEN.floatVal or self.tokenLido[0] == TOKEN.strVal or self.tokenLido[0] == TOKEN.ident:
-            self.elem()
+            self.exp()
             self.restoElemLista()
         pass
 
@@ -333,7 +357,7 @@ class Sintatico:
             self.consome(TOKEN.virg)
             self.elem()
             self.restoElemLista()
-    
+
     def elem(self):
         # <elem> -> intVal | floatVal | strVal | ident 
         if self.tokenLido[0] == TOKEN.intVal:
@@ -380,12 +404,18 @@ class Sintatico:
             pass
     
     def leitura(self):
-        # <leitura> -> read ( strVal , ident ) ;
+        # <leitura> -> read ( <exp> , ident ) ;
         self.consome(TOKEN.READ)
         self.consome(TOKEN.abrePar)
-        self.consome(TOKEN.strVal)
+        tipo_exp = self.exp()  # Aceita uma expressão
+        if tipo_exp != (TOKEN.TSTRING, False):
+            self.semantico.erroSemantico(self.tokenLido, "O prompt deve ser uma string.")
         self.consome(TOKEN.virg)
+        salva_ident = self.tokenLido
         self.consome(TOKEN.ident)
+        # Verifica se a variável existe
+        if self.semantico.consulta(salva_ident) is None:
+            self.semantico.erroSemantico(salva_ident, "Variável não declarada.")
         self.consome(TOKEN.fechaPar)
         self.consome(TOKEN.ptoVirg)
     
@@ -413,7 +443,7 @@ class Sintatico:
     
     def out(self):
         # <out> -> <folha>
-        self.folha()
+        self.exp()
     
     def bloco(self):
         # <bloco> -> { <calculo> }
@@ -556,7 +586,7 @@ class Sintatico:
                     self.semantico.erroSemantico(salvaIdent, "Identificador não declarado.")
                 else:
                     (tipo, info) = result
-                    if (tipo == TOKEN.FUNCTION):
+                    if tipo == TOKEN.FUNCTION:
                         return self.call()
                     else:
                         res = self.lista()
@@ -564,10 +594,17 @@ class Sintatico:
                     
         elif self.tokenLido[0] == TOKEN.abrePar:
             self.consome(TOKEN.abrePar)
-            self.exp()
+            res = self.exp()
             self.consome(TOKEN.fechaPar)
+            return res
         elif self.tokenLido[0] == TOKEN.abreCol:
-            self.lista()
+            return self.lista()
+        elif self.tokenLido[0] == TOKEN.FALSE:
+            self.consome(TOKEN.FALSE)  # Consome o token FALSE
+            return (TOKEN.TBOOLEAN, False)
+        elif self.tokenLido[0] == TOKEN.TRUE:
+            self.consome(TOKEN.TRUE)  # Consome o token TRUE
+            return (TOKEN.TBOOLEAN, False)
 
     def call(self):
         # <call> -> ident ( <lista_outs> )
