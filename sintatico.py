@@ -457,9 +457,15 @@ class Sintatico:
             nome_variavel = salvaIdent[1]
             
             if tipo_expressao == []:
-                self.semantico.gera(indent_level, f'{nome_variavel} = []\n')
+                if is_lista[1]:
+                    self.semantico.gera(indent_level, f'{is_lista[1]} = []\n')
+                else:
+                    self.semantico.gera(indent_level, f'{nome_variavel} = []\n')
             else:
-                self.semantico.gera(indent_level, f'{nome_variavel} = {tipo_expressao[1]}\n')
+                if is_lista[1]:
+                    self.semantico.gera(indent_level, f'{is_lista[1]} = {tipo_expressao[1]}\n')
+                else:
+                    self.semantico.gera(indent_level, f'{nome_variavel} = {tipo_expressao[1]}\n')
 
             self.consome(TOKEN.ptoVirg)
 

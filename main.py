@@ -32,7 +32,7 @@ if __name__ == '__main__':
         # x.sintatico.testaLexico()
         x.finaliza()
     
-    # x = Tradutor("./tests/find_sublist_with_sum.txt")
+    # x = Tradutor("./tests/sort.txt")
     # x.inicializa()
     # x.traduz()
     # #x.sintatico.testaLexico()
