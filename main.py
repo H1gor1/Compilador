@@ -1,10 +1,11 @@
 #---------------------------------------------------
-# Tradutor para a linguagem CALC
+# Tradutor para a linguagem B-A-BA
 #
-# versao 1a (mar-2024)
+# versao final (jan-2025)
 #---------------------------------------------------
 from lexico import Lexico
 from sintatico import Sintatico
+import glob
 
 class Tradutor:
 
@@ -24,16 +25,16 @@ class Tradutor:
 
 # inicia a traducao
 if __name__ == '__main__':
-    # for i in range(10):
-    #     x = Tradutor(f"tests/program_test{i}.txt")
-    #     x.inicializa()
-    #     x.traduz()
-    #     #x.sintatico.testaLexico()
-    #     x.finaliza()
+    for file_path in glob.glob("tests/*.txt"):
+        x = Tradutor(file_path)
+        x.inicializa()
+        x.traduz()
+        # x.sintatico.testaLexico()
+        x.finaliza()
     
-    x = Tradutor("./bolha.txt")
-    x.inicializa()
-    x.traduz()
-    #x.sintatico.testaLexico()
-    x.finaliza()
+    # x = Tradutor("./tests/find_sublist_with_sum.txt")
+    # x.inicializa()
+    # x.traduz()
+    # #x.sintatico.testaLexico()
+    # x.finaliza()
 

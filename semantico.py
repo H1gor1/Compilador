@@ -80,7 +80,7 @@ class Semantico:
         }
         self.alvo = open(nomeAlvo, "wt")
         self.declara((TOKEN.ident, 'len', 0, 0),
-                     (TOKEN.FUNCTION, [(None, True), (TOKEN.TINT, False)]))
+                     (TOKEN.FUNCTION, [(TOKEN.TSTRING, True), (TOKEN.TINT, False)]))
         self.declara((TOKEN.ident, 'num2str', 0, 0),
                      (TOKEN.FUNCTION, [(TOKEN.TFLOAT, False), (TOKEN.TSTRING, False)]))
         self.declara((TOKEN.ident, 'str2num', 0, 0),
@@ -100,7 +100,7 @@ class Semantico:
 
     def gera(self, nivel, codigo):
         identacao = ' ' * 3 * nivel
-        linha = identacao + codigo + '\n'
+        linha = identacao + codigo
         self.alvo.write(linha)
 
     def declara(self, tokenAtual, tipo):
